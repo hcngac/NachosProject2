@@ -1,4 +1,4 @@
-// scheduler.cc 
+// scheduler.cc
 //	Routines to choose the next thread to run, and to dispatch to
 //	that thread.
 //
@@ -7,15 +7,15 @@
 //	(since we are on a uniprocessor).
 //
 // 	NOTE: We can't use Locks to provide mutual exclusion here, since
-// 	if we needed to wait for a lock, and the lock was busy, we would 
-//	end up calling FindNextToRun(), and that would put us in an 
+// 	if we needed to wait for a lock, and the lock was busy, we would
+//	end up calling FindNextToRun(), and that would put us in an
 //	infinite loop.
 //
 // 	Very simple implementation -- no priorities, straight FIFO.
 //	Might need to be improved in later assignments.
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
-// All rights reserved.  See copyright.h for copyright notice and limitation 
+// All rights reserved.  See copyright.h for copyright notice and limitation
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
@@ -29,10 +29,10 @@
 //----------------------------------------------------------------------
 
 Scheduler::Scheduler()
-{ 
-    readyList = new List<Thread *>(); 
+{
+    readyList = new List<Thread *>();
     suspendedList = new List<Thread *>();
-} 
+}
 
 //----------------------------------------------------------------------
 // Scheduler::~Scheduler
@@ -40,9 +40,9 @@ Scheduler::Scheduler()
 //----------------------------------------------------------------------
 
 Scheduler::~Scheduler()
-{ 
-    delete readyList; 
-} 
+{
+    delete readyList;
+}
 
 //----------------------------------------------------------------------
 // Scheduler::ReadyToRun
@@ -61,7 +61,7 @@ Scheduler::ReadyToRun (Thread *thread)
     switch(policy)
     {
     	case SCHED_FCFS:
-			{   
+			{
 			    	readyList->Append(thread);
 				break;
 			}
@@ -69,18 +69,18 @@ Scheduler::ReadyToRun (Thread *thread)
     	case SCHED_SJF:
 			{
 				//YOUR PROJECT2 CODE HERE
-				
+				    readyList->SortedInsert(thread, thread->getBurstTime());
 				break;
 			}
     	case SCHED_PRIO_NP:
 			{	//YOUR PROJECT2 CODE HERE
-
+          readyList->SortedInsert(thread, 0 - thread->getPriority());
 				break;
 			}
     	default:
-    		readyList->Append(thread);	
+    		readyList->Append(thread);
     		break;
-    	
+
     }
 }
 
@@ -95,31 +95,31 @@ Scheduler::FindNextToRun ()
    Thread * next_to_run;
    switch(policy)
    {
-   	
+
    	case SCHED_FCFS:
-	{  
+	{
 		next_to_run = readyList->Remove();
 		break;
 	}
    	case SCHED_SJF:
 	{
 	 	//YOUR PROJECT2 CODE HERE
-		
+  		next_to_run = readyList->Remove();
 		break;
 	}
-   
+
    	case SCHED_PRIO_NP:
    	{
 		//YOUR PROJECT2 CODE HERE
-
+  		next_to_run = readyList->Remove();
 		break;
    	}
-        
+
    	default:
-   		next_to_run = readyList->Remove();	
+   		next_to_run = readyList->Remove();
    		break;
    }
-   return ( next_to_run );  
+   return ( next_to_run );
 }
 
 
@@ -136,25 +136,25 @@ Scheduler::ShouldISwitch ( Thread  * oldThread, Thread * newThread )
    switch(policy)
    {
    	case SCHED_FCFS:
-    	{	
+    	{
 		doSwitch = false;
 		break;
 	}
    	case SCHED_SJF:
 	{
     		//YOUR PROJECT2 CODE HERE
-		
+    doSwitch = false;
 		break;
 	}
    	case SCHED_PRIO_NP:
    	{
 		//YOUR PROJECT2 CODE HERE
-
+    doSwitch = false;
 		break;
 	}
 
    	default:
-   		doSwitch = false;	
+   		doSwitch = false;
    		break;
    }
    return doSwitch;
@@ -178,30 +178,30 @@ void
 Scheduler::Run (Thread *nextThread)
 {
     Thread *oldThread = currentThread;
-    
-#ifdef USER_PROGRAM			// ignore until running user programs 
+
+#ifdef USER_PROGRAM			// ignore until running user programs
     if (currentThread->space != NULL) {	// if this thread is a user program,
         currentThread->SaveUserState(); // save the user's CPU registers
 	currentThread->space->SaveState();
     }
 #endif
-    
+
     oldThread->CheckOverflow();		    // check if the old thread
 					    // had an undetected stack overflow
 
     currentThread = nextThread;		    // switch to the next thread
     currentThread->setStatus(RUNNING);      // nextThread is now running
-    
+
     printf("Switching from thread \"%s\" to thread \"%s\"\n",
 	  oldThread->getName(), nextThread->getName());
-    
-    // This is a machine-dependent assembly language routine defined 
+
+    // This is a machine-dependent assembly language routine defined
     // in switch.s.  You may have to think
     // a bit to figure out what happens after this, both from the point
     // of view of the thread and from the perspective of the "outside world".
 
     SWITCH(oldThread, nextThread);
-    
+
 //    printf("Now in thread \"%s\"\n", currentThread->getName());
 
     // If the old thread gave up the processor because it was finishing,
@@ -212,7 +212,7 @@ Scheduler::Run (Thread *nextThread)
         delete threadToBeDestroyed;
 	threadToBeDestroyed = NULL;
     }
-    
+
 #ifdef USER_PROGRAM
     if (currentThread->space != NULL) {		// if there is an address space
         currentThread->RestoreUserState();     // to restore, do it.
@@ -224,9 +224,9 @@ Scheduler::Run (Thread *nextThread)
 //---------------------------------------------------------------------
 // NEW
 // Suspends a thread from execution. The suspended thread is removed
-// from ready list and added to suspended list. The suspended thread 
+// from ready list and added to suspended list. The suspended thread
 // remains there until it is resumed by some other thread. Note that
-// it is not an error to suspend an thread which is already in the 
+// it is not an error to suspend an thread which is already in the
 // suspended state.
 //
 // NOTE: This method assumes that interrupts have been turned off.
@@ -243,7 +243,7 @@ void Scheduler::Suspend(Thread *thread) {
     else
       tmp->Prepend(t);
   }
-  
+
   // Add the suspended thread to the suspended list
   if (t == thread) {
     t->setStatus(SUSPENDED);
@@ -278,7 +278,7 @@ void Scheduler::Resume(Thread *thread) {
     else
       tmp->Prepend(t);
   }
-  
+
   // Add the resumed thread to the ready list
   if (t == thread) {
     t->setStatus(READY);
@@ -310,7 +310,7 @@ Scheduler::Print()
 
 //----------------------------------------------------------------------
 // Scheduler::InterruptHandler
-//   Handles timer interrupts for Round-robin scheduling.  Since this 
+//   Handles timer interrupts for Round-robin scheduling.  Since this
 //   is called while the system is an interrupt handler, use YieldOnReturn.
 //   Be sure that your scheduling policy is still Round Robin.
 //----------------------------------------------------------------------
@@ -331,7 +331,7 @@ void SchedInterruptHandler( int dummy )
 //      Set the scheduling policy to one of SCHED_FCFS, SCHED_SJF,
 //      SCHED_PRIO_NP
 //----------------------------------------------------------------------
-void 
+void
 Scheduler::SetSchedPolicy(SchedPolicy pol)
 {
     SchedPolicy oldPolicy = policy;
@@ -357,7 +357,7 @@ Scheduler::SetSchedPolicy(SchedPolicy pol)
 // Scheduler::SetNumOfQueues
 //      Set the number of queues for MLQ - should be called only once
 //----------------------------------------------------------------------
-void 
+void
 Scheduler::SetNumOfQueues(int level)
 {
    NumOfLevel = level;
